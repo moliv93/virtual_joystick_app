@@ -1,7 +1,9 @@
 from evdev import categorize, InputDevice, UInput, AbsInfo, ecodes as ec
 import socket
 import time
-
+from _thread import *
+import threading
+import netifaces
 
 cap = {
     ec.EV_KEY : [ec.BTN_WEST, ec.BTN_SOUTH, ec.BTN_EAST, ec.BTN_NORTH, ec.BTN_THUMBL, ec.BTN_THUMBR,
@@ -19,16 +21,35 @@ codes = {'X': ec.BTN_WEST, 'A': ec.BTN_SOUTH, 'B':ec.BTN_EAST, 'Y': ec.BTN_NORTH
         'BTN': ec.EV_KEY, 'ABS': ec.EV_ABS
 }
 
-HOST = '<broadcast>'
+iface = 'wlp6s0'
+addresses = netifaces.ifaddresses(iface)
+own_address = addresses[netifaces.AF_INET][0]['addr']
 PORT = 2812
+CLIENT_PORT = 55555
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-server_socket.bind((HOST, PORT))
+server_socket.bind((own_address, PORT))
+
+response_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+response_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+response_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+response_socket.bind(('<broadcast>', PORT))
 
 devices = {}
 
+def listener_response():
+    while True:
+        data, addr = response_socket.recvfrom(2048)
+        print("Received: ", data.decode(), " from ", addr)
+        if (data.decode() == 'HENLO'):
+            print("senting to ", addr)
+            response_socket.sendto(bytes('GOODAY', "utf-8"), addr)
+
+
+
 i = 0
+start_new_thread(listener_response, ())
 while True:
     # print("Listening")
     data, addr = server_socket.recvfrom(2048)
