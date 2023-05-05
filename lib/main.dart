@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:listener_widgets/JoystickUI.dart';
@@ -42,7 +43,35 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
   }
 
   void findServer() async {
-    RawDatagramSocket handShakeSocket = await RawDatagramSocket.bind('192.168.1.136', clientPort);
+
+    final interfaces = await NetworkInterface.list();
+    print(interfaces);
+
+    // NetworkInterface wifi = null;
+    // interfaces.forEach((interface) {
+    //   if (interface.name == 'wlp6s0') {
+    //     wifi = interface;
+    //   }
+    // });
+    // print(interfaces);
+
+    // Find the interface associated with the WiFi network
+    final wifiInterface = interfaces.firstWhere(
+      (interface) => interface.name.startsWith('wlan'),
+    );
+
+    // Obtain the first IPv4 address associated with the WiFi interface
+    final ipAddress = wifiInterface?.addresses
+        .firstWhere((address) => address.type == InternetAddressType.IPv4,)
+        ?.address;
+
+    if (ipAddress != null) {
+      print('The IP address of your WiFi network is: $ipAddress');
+    } else {
+      print('Unable to determine the IP address of your WiFi network.');
+    }
+
+    RawDatagramSocket handShakeSocket = await RawDatagramSocket.bind(ipAddress, clientPort);
     handShakeSocket.broadcastEnabled = true;
     // handShakeSocket.listen((RawSocketEvent e) {
     //   Datagram? d = handShakeSocket.receive();
@@ -72,6 +101,11 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
   }
 
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
     return Scaffold(
       body: Column(
         children: <Widget>[
