@@ -24,10 +24,18 @@ codes = {'X': ec.BTN_WEST, 'A': ec.BTN_SOUTH, 'B':ec.BTN_EAST, 'Y': ec.BTN_NORTH
         'BTN': ec.EV_KEY, 'ABS': ec.EV_ABS
 }
 
-iface = 'wlp6s0'
-addresses = netifaces.ifaddresses(iface)
-# own_address = addresses[netifaces.AF_INET][0]['addr']
-own_address = '127.0.0.1'
+# iface = 'wlp6s0'
+interfaces = netifaces.interfaces()
+for i in range(len(interfaces)):
+    print(f'{i}: {interfaces[i]}')
+print('Escolha a interface de internet para se conectar')
+choose = input()
+while (int(choose) > len(interfaces)):
+    print('Escolha a interface de internet para se conectar')
+    choose = input()
+addresses = netifaces.ifaddresses(interfaces[int(choose)])
+own_address = addresses[netifaces.AF_INET][0]['addr']
+# own_address = '127.0.0.1'
 PORT = 2812
 CLIENT_PORT = 55555
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

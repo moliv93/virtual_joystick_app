@@ -36,13 +36,28 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
   int serverPort = 2812;
   int clientPort = 55555;
   TextEditingController ipReader = TextEditingController();
+  List<Widget> buttonInterfaces = [];
 
   @override
   void initState() {
     super.initState();
+    NetworkInterface.list().then((var interfaces) {
+      interfaces.forEach((var i) {
+        final name = i.name;
+        buttonInterfaces.add(TextButton(
+          onPressed: () {
+            findServer(name);
+          },
+          child: Text(name),
+          )
+        );
+      });
+      setState((){});
+    });
+
   }
 
-  void findServer() async {
+  void findServer(String interfaceName) async {
 
     final interfaces = await NetworkInterface.list();
     print(interfaces);
@@ -56,19 +71,19 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
     // print(interfaces);
 
     // Find the interface associated with the WiFi network
-    final wifiInterface = interfaces.firstWhere(
-      (interface) => interface.name.startsWith('wlan'),
+    final chosenInterface = interfaces.firstWhere(
+      (interface) => interface.name.startsWith(interfaceName),
     );
 
     // Obtain the first IPv4 address associated with the WiFi interface
-    final ipAddress = wifiInterface?.addresses
+    final ipAddress = chosenInterface?.addresses
         .firstWhere((address) => address.type == InternetAddressType.IPv4,)
         ?.address;
 
     if (ipAddress != null) {
-      print('The IP address of your WiFi network is: $ipAddress');
+      print('The IP address of your network is: $ipAddress');
     } else {
-      print('Unable to determine the IP address of your WiFi network.');
+      print('Unable to determine the IP address of your network.');
     }
 
     RawDatagramSocket handShakeSocket = await RawDatagramSocket.bind(ipAddress, clientPort);
@@ -106,12 +121,17 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
+
     return Scaffold(
       body: Column(
         children: <Widget>[
-          TextButton(
-            onPressed: () {findServer();},
-            child: Text('Search for server automatically'),
+          // TextButton(
+          //   onPressed: () {findServer();},
+          //   child: Text('Search for server automatically'),
+          // ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: buttonInterfaces,
           ),
           TextField(
             controller: ipReader,
