@@ -344,6 +344,8 @@ class CanvasConeButton extends CanvasInteractor {
   Offset textOffset = Offset(10, 20);
   double startAngle = 0;
   double sweepAngle = pi*2;
+  double twoPI = pi*2;
+  Offset pointingDirection = Offset(0, 0);
 
   CanvasConeButton({String text = 'B',
                 double bigRadius = 40,
@@ -389,6 +391,19 @@ class CanvasConeButton extends CanvasInteractor {
                   this.textPainter.layout(
                     minWidth: 0,
                   );
+                  this.pointingDirection = Offset.fromDirection(startAngle+(sweepAngle/2));
+  }
+
+  bool inside(PointerEvent details) {
+    Offset distance = details.position - center;
+    double direction = distance.direction;
+    if (direction < 0) {
+      double opposite = -direction;
+      direction = pi + (pi + direction);
+    }
+    return (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius
+            && (direction > startAngle && direction < startAngle+sweepAngle ||
+                direction+twoPI > startAngle && direction+twoPI < startAngle+sweepAngle));
   }
 
   @override
@@ -399,8 +414,7 @@ class CanvasConeButton extends CanvasInteractor {
       double opposite = -direction;
       direction = pi + (pi + direction);
     }
-    if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius
-        && direction > startAngle && direction < startAngle+sweepAngle) {
+    if (inside(details)) {
       pointers.add(details.pointer);
     }
     if (pointers.length > 0) {
@@ -414,14 +428,7 @@ class CanvasConeButton extends CanvasInteractor {
   @override
   void deactivate(PointerEvent details) {
     if (!pointers.contains(details.pointer)) return;
-    Offset distance = details.position - center;
-    double direction = distance.direction;
-    if (direction < 0) {
-      double opposite = -direction;
-      direction = pi + (pi + direction);
-    }
-    if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius
-        || direction < startAngle || direction > startAngle+sweepAngle) {
+    if (inside(details)) {
       pointers.remove(details.pointer);
     }
     if (pointers.length > 0) {
@@ -434,14 +441,7 @@ class CanvasConeButton extends CanvasInteractor {
 
   @override
   void move_test(PointerEvent details) {
-    Offset distance = details.position - center;
-    double direction = distance.direction;
-    if (direction < 0) {
-      double opposite = -direction;
-      direction = pi + (pi + direction);
-    }
-    if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius
-        && direction > startAngle && direction < startAngle+sweepAngle) {
+    if (inside(details)) {
       pointers.add(details.pointer);
       isPressed = pointers.length > 0;
     }
@@ -455,6 +455,7 @@ class CanvasConeButton extends CanvasInteractor {
   void draw(Canvas canvas) {
     canvas.drawArc(Rect.fromCircle(center: center, radius: bigRadius), startAngle, sweepAngle, true, backgroundPaint);
     canvas.drawArc(Rect.fromCircle(center: center, radius: smallRadius), startAngle, sweepAngle, true, isPressed ? normalPaint : pressedPaint);
+    textPainter.paint(canvas, center+(pointingDirection*(bigRadius/2))-textOffset);
   }
 }
 
