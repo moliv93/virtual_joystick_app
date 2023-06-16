@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math';
@@ -42,11 +43,6 @@ class _JoystickUIState extends State<JoystickUI> {
   @override
   void initState() {
     super.initState();
-    // RawDatagramSocket.bind(InternetAddress.anyIPv4, 55555).then((value) {
-    //   socket = value;
-    //   socket.broadcastEnabled = true;
-    // });
-    // socket.broadcastEnabled = true;
   }  
 
   void _incrementDown(PointerEvent details) {
@@ -122,6 +118,7 @@ class CanvasDrawable {
 
 class CanvasInteractor extends CanvasDrawable {
   bool isPressed = false;
+  Offset center = Offset(200, 300);
 
   void activate(PointerEvent details) {
     print('BASE INTERACTOR ACTIVATE');
@@ -470,8 +467,23 @@ class JoystickPainter extends CustomPainter {
                     ..style = PaintingStyle.fill
                     ..color = Colors.indigo.shade400;
 
+  void loadTrueCoordinates() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    handler.center = Offset(prefs.getDouble('HandlerX') ?? 0, prefs.getDouble('HandlerY') ?? 0);
+    buttons['X']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
+    buttons['Y']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
+    buttons['A']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
+    buttons['B']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
+    buttons['L']?.center = Offset(prefs.getDouble('LButtonX') ?? 0, prefs.getDouble('LButtonY') ?? 0);
+    buttons['R']?.center = Offset(prefs.getDouble('RButtonX') ?? 0, prefs.getDouble('RButtonY') ?? 0);
+    buttons['Start']?.center = Offset(prefs.getDouble('StartX') ?? 0, prefs.getDouble('StartY') ?? 0);
+    buttons['Select']?.center = Offset(prefs.getDouble('SelectX') ?? 0, prefs.getDouble('SelectY') ?? 0);
+    // print("X position:");
+    // print(Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0));
+  }
+
   JoystickPainter({required this.notifier}) : super(repaint: notifier) {
-    handler = CanvasHandler(
+   handler = CanvasHandler(
       effectRadius: 100,
       centerX: 200,
       centerY: 300,
@@ -566,6 +578,8 @@ class JoystickPainter extends CustomPainter {
       textOffsetX: 20,
       textOffsetY: 15,
     );
+
+    loadTrueCoordinates();
   }
 
   void updateStatesPress(PointerEvent details) {
