@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:listener_widgets/JoystickUI.dart';
+import 'package:listener_widgets/JoystickMover.dart';
 
 void main() {
   runApp(const MyApp());
@@ -120,35 +121,35 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => JoystickUI(title: 'joystick', socket: socket, hostIP: ip)));
   }
 
+  void buttonsConfiguration() {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => JoystickMover(title: 'joystick')));
+  }
+
   setDefaulPositions(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool checkValue = prefs.containsKey('DataGenerated');
-    if (true) {
-      prefs.setBool('DataGenerated', true);
-      double width = MediaQuery.of(context).size.width;
-      double height = MediaQuery.of(context).size.height;
-      prefs.setDouble('screenHeight', height);
-      prefs.setDouble('screenWidth', width);
-      print(Offset(prefs.getDouble('screenHeight') ?? 0, prefs.getDouble('screenWidth') ?? 0));
+    double width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+    prefs.setDouble('screenHeight', height);
+    prefs.setDouble('screenWidth', width);
+    print(Offset(prefs.getDouble('screenHeight') ?? 0, prefs.getDouble('screenWidth') ?? 0));
 
-      prefs.setDouble('PizzaButtonsX', width*0.8);
-      prefs.setDouble('PizzaButtonsY', height*0.5);
-      
-      prefs.setDouble('LButtonX', width*0.05);
-      prefs.setDouble('LButtonY', height*0.15);
-      
-      prefs.setDouble('RButtonX', width*0.95);
-      prefs.setDouble('RButtonY', height*0.15);
-      
-      prefs.setDouble('SelectX', width*0.45);
-      prefs.setDouble('SelectY', height*0.85);
-      
-      prefs.setDouble('StartX', width*0.55);
-      prefs.setDouble('StartY', height*0.85);
-      
-      prefs.setDouble('HandlerX', width*0.25);
-      prefs.setDouble('HandlerY', height*0.5);
-    }
+    prefs.setDouble('PizzaButtonsX', width*0.8);
+    prefs.setDouble('PizzaButtonsY', height*0.5);
+    
+    prefs.setDouble('LButtonX', width*0.05);
+    prefs.setDouble('LButtonY', height*0.15);
+    
+    prefs.setDouble('RButtonX', width*0.95);
+    prefs.setDouble('RButtonY', height*0.15);
+    
+    prefs.setDouble('SelectX', width*0.45);
+    prefs.setDouble('SelectY', height*0.85);
+    
+    prefs.setDouble('StartX', width*0.55);
+    prefs.setDouble('StartY', height*0.85);
+    
+    prefs.setDouble('HandlerX', width*0.25);
+    prefs.setDouble('HandlerY', height*0.5);
   }
 
   Widget build(BuildContext context) {
@@ -157,7 +158,6 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-    setDefaulPositions(context);
 
     return Scaffold(
       body: Column(
@@ -179,7 +179,15 @@ class _JoystickHomepageState extends State<JoystickHomepage> {
           TextButton(
             onPressed: () {directlyConect(ipReader.text);},
             child: Text('Connect to the given IP'),
-          )
+          ),
+          TextButton(
+            onPressed: buttonsConfiguration,
+            child: Text('Configure buttons position'),
+          ),
+          TextButton(
+            onPressed: () {setDefaulPositions(context);},
+            child: Text('Reset buttons positions'),
+          ),
         ],
       )
     );
