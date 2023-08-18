@@ -4,41 +4,37 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math';
+import 'package:listener_widgets/JoystickUI.dart';
+import 'package:listener_widgets/main.dart';
 
-const A_BIN_INDEX = 0;
-const B_BIN_INDEX = 1;
-const Y_BIN_INDEX = 2;
-const X_BIN_INDEX = 3;
-const R_BIN_INDEX = 4;
-const L_BIN_INDEX = 5;
-const SELECT_BIN_INDEX = 6;
-const START_BIN_INDEX = 7;
+// const A_BIN_INDEX = 0;
+// const B_BIN_INDEX = 1;
+// const Y_BIN_INDEX = 2;
+// const X_BIN_INDEX = 3;
+// const R_BIN_INDEX = 4;
+// const L_BIN_INDEX = 5;
+// const SELECT_BIN_INDEX = 6;
+// const START_BIN_INDEX = 7;
 
-class JoystickUI extends StatefulWidget {
-  const JoystickUI({Key? key, this.title = 'ui of joystick', required this.socket, required this.hostIP}) : super(key: key);
+class JoystickMover extends StatefulWidget {
+  const JoystickMover({Key? key, this.title = 'ui of joystick'}) : super(key: key);
 
   final String title;
-  final RawDatagramSocket socket;
-  final String hostIP;
 
   @override
-  _JoystickUIState createState() => _JoystickUIState(socket: socket, hostIP: hostIP);
+  _JoystickMoverState createState() => _JoystickMoverState();
 }
 
 final _counter = ValueNotifier<int>(0);
 
-class _JoystickUIState extends State<JoystickUI> {
-  _JoystickUIState({required this.socket, required this.hostIP}) : super();
+class _JoystickMoverState extends State<JoystickMover> {
+  _JoystickMoverState() : super();
 
-  final RawDatagramSocket socket;
-  final String hostIP;
-  int port = 2812;
-  JoystickPainter joystick = JoystickPainter(notifier: _counter);
+  JoystickPainterMover joystick = JoystickPainterMover(notifier: _counter);
   int _downCounter = 0;
   int _upCounter = 0;
   double x = 0.0;
   double y = 0.0;
-  String  oldButtonData = '';
 
   @override
   void initState() {
@@ -76,14 +72,14 @@ class _JoystickUIState extends State<JoystickUI> {
     });
   }
 
-  void send_data() {
-    String buttonData = joystick.generateButtonData();
-    if (buttonData != oldButtonData) {
-      print(buttonData);
-      oldButtonData = buttonData;
-      socket.send(buttonData.codeUnits, InternetAddress(hostIP), port);
-    }
-  }
+  // void send_data() {
+  //   String buttonData = joystick.generateButtonData();
+  //   if (buttonData != oldButtonData) {
+  //     print(buttonData);
+  //     oldButtonData = buttonData;
+  //     socket.send(buttonData.codeUnits, InternetAddress(hostIP), port);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -91,8 +87,16 @@ class _JoystickUIState extends State<JoystickUI> {
         DeviceOrientation.landscapeLeft,
       ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-    send_data();
+    // send_data();
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => JoystickHomepage(title: 'joystick')));
+        },
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.close),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniCenterTop,
       body: Container(
         child: Listener(
           onPointerDown: _incrementDown,
@@ -110,30 +114,30 @@ class _JoystickUIState extends State<JoystickUI> {
   }
 }
 
-class CanvasDrawable {
-  void draw(Canvas canvas) {
-    print('BASE CLASS DRAWABLE');
-  }
-}
+// class CanvasDrawable {
+//   void draw(Canvas canvas) {
+//     print('BASE CLASS DRAWABLE');
+//   }
+// }
 
-class CanvasInteractor extends CanvasDrawable {
-  bool isPressed = false;
-  Offset center = Offset(200, 300);
+// class CanvasInteractor extends CanvasDrawable {
+//   bool isPressed = false;
+//   Offset center = Offset(200, 300);
 
-  void activate(PointerEvent details) {
-    print('BASE INTERACTOR ACTIVATE');
-  }
+//   void activate(PointerEvent details) {
+//     print('BASE INTERACTOR ACTIVATE');
+//   }
 
-  void deactivate(PointerEvent details) {
-    print('BASE INTERACTOR DEACTIVATE');
-  }
+//   void deactivate(PointerEvent details) {
+//     print('BASE INTERACTOR DEACTIVATE');
+//   }
 
-  void move_test(PointerEvent details) {
-    print('BASE INTERACTOR MOVE_TEST');
-  }
-}
+//   void move_test(PointerEvent details) {
+//     print('BASE INTERACTOR MOVE_TEST');
+//   }
+// }
 
-class CanvasHandler extends CanvasInteractor {
+class CanvasHandlerMover extends CanvasHandler {
   double activationRadius = 150;
   double effectRadius = 100;
   Offset center = Offset(200, 300);
@@ -148,7 +152,7 @@ class CanvasHandler extends CanvasInteractor {
   Paint handlerPaint = Paint();
   Paint activationAreaPaint = Paint();
 
-  CanvasHandler({
+  CanvasHandlerMover({
     double effectRadius = 100,
     double centerX = 200,
     double centerY = 300,
@@ -202,25 +206,26 @@ class CanvasHandler extends CanvasInteractor {
   @override
   void move_test(PointerEvent details) {
     if (controlPointer != details.pointer) return;
-    Offset distance = details.position - handlerAnchor;
-    drag = distance;
-    if (drag.distance > effectRadius) {
-      drag = drag.scale(1/drag.distance, 1/drag.distance) * effectRadius;
-    }
-    handlerCenter = handlerAnchor+drag;
+    center = center + details.delta;
+    // Offset distance = details.position - handlerAnchor;
+    // drag = distance;
+    // if (drag.distance > effectRadius) {
+    //   drag = drag.scale(1/drag.distance, 1/drag.distance) * effectRadius;
+    // }
+    // handlerCenter = handlerAnchor+drag;
   }
 
   @override
   void draw(Canvas canvas) {
     canvas.drawCircle(center, activationRadius, activationAreaPaint);
-    if (controlPointer != -1) {
-      canvas.drawCircle(handlerAnchor, effectRadius, backgroundPaint);
-      canvas.drawCircle(handlerCenter, handlerRadius, handlerPaint);
-    }
+    // if (controlPointer != -1) {
+    //   canvas.drawCircle(handlerAnchor, effectRadius, backgroundPaint);
+    //   canvas.drawCircle(handlerCenter, handlerRadius, handlerPaint);
+    // }
   }
 }
 
-class CanvasButton extends CanvasInteractor{
+class CanvasButtonMover extends CanvasButton {
   bool isPressed = false;
   Set<int> pointers = Set();
   double bigRadius = 40;
@@ -234,7 +239,7 @@ class CanvasButton extends CanvasInteractor{
   TextPainter textPainter = TextPainter();
   Offset textOffset = Offset(10, 20);
 
-  CanvasButton({String text = 'B',
+  CanvasButtonMover({String text = 'B',
                 double bigRadius = 40,
                 double smallRadius = 35,
                 double centerX = 500,
@@ -309,13 +314,14 @@ class CanvasButton extends CanvasInteractor{
   void move_test(PointerEvent details) {
     Offset distance = details.position - center;
     if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius) {
-      pointers.add(details.pointer);
-      isPressed = pointers.length > 0;
+      center = center + details.delta;
+      // pointers.add(details.pointer);
+      // isPressed = pointers.length > 0;
     }
-    else {
-      pointers.remove(details.pointer);
-      isPressed = pointers.length > 0;
-    }
+    // else {
+    //   pointers.remove(details.pointer);
+    //   isPressed = pointers.length > 0;
+    // }
   }
 
   @override
@@ -326,7 +332,9 @@ class CanvasButton extends CanvasInteractor{
   }
 }
 
-class CanvasConeButton extends CanvasInteractor {
+
+
+class CanvasButtonCaller extends CanvasButton {
   bool isPressed = false;
   Set<int> pointers = Set();
   double bigRadius = 40;
@@ -339,12 +347,9 @@ class CanvasConeButton extends CanvasInteractor {
   TextSpan textSpan = TextSpan();
   TextPainter textPainter = TextPainter();
   Offset textOffset = Offset(10, 20);
-  double startAngle = 0;
-  double sweepAngle = pi*2;
-  double twoPI = pi*2;
-  Offset pointingDirection = Offset(0, 0);
+  VoidCallback? callback;
 
-  CanvasConeButton({String text = 'B',
+  CanvasButtonCaller({String text = 'B',
                 double bigRadius = 40,
                 double smallRadius = 35,
                 double centerX = 500,
@@ -356,14 +361,11 @@ class CanvasConeButton extends CanvasInteractor {
                 double textOffsetX = 10,
                 double textOffsetY = 20,
                 double fontSize = 35,
-                double startAngle = 0,
-                double sweepAngle = pi*2}) {
+                VoidCallback? callback}) {
                   this.bigRadius = bigRadius;
                   this.smallRadius = smallRadius;
                   this.center = Offset(centerX, centerY);
                   this.textOffset = Offset(textOffsetX, textOffsetY);
-                  this.startAngle = startAngle;
-                  this.sweepAngle = sweepAngle;
                   this.backgroundPaint = Paint()
                     ..style = PaintingStyle.fill
                     ..color = backgroundColor;
@@ -388,31 +390,17 @@ class CanvasConeButton extends CanvasInteractor {
                   this.textPainter.layout(
                     minWidth: 0,
                   );
-                  this.pointingDirection = Offset.fromDirection(startAngle+(sweepAngle/2));
-  }
-
-  bool inside(PointerEvent details) {
-    Offset distance = details.position - center;
-    double direction = distance.direction;
-    if (direction < 0) {
-      double opposite = -direction;
-      direction = pi + (pi + direction);
-    }
-    return (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius
-            && (direction > startAngle && direction < startAngle+sweepAngle ||
-                direction+twoPI > startAngle && direction+twoPI < startAngle+sweepAngle));
+                  this.callback = callback;
   }
 
   @override
   void activate(PointerEvent details) {
     Offset distance = details.position - center;
-    double direction = distance.direction;
-    if (direction < 0) {
-      double opposite = -direction;
-      direction = pi + (pi + direction);
-    }
-    if (inside(details)) {
+    if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius) {
       pointers.add(details.pointer);
+      if (callback != null) {
+        callback?.call;
+      }
     }
     if (pointers.length > 0) {
       isPressed = true;
@@ -425,7 +413,8 @@ class CanvasConeButton extends CanvasInteractor {
   @override
   void deactivate(PointerEvent details) {
     if (!pointers.contains(details.pointer)) return;
-    if (inside(details)) {
+    Offset distance = details.position - center;
+    if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius) {
       pointers.remove(details.pointer);
     }
     if (pointers.length > 0) {
@@ -438,25 +427,27 @@ class CanvasConeButton extends CanvasInteractor {
 
   @override
   void move_test(PointerEvent details) {
-    if (inside(details)) {
-      pointers.add(details.pointer);
-      isPressed = pointers.length > 0;
+    Offset distance = details.position - center;
+    if (sqrt(pow(distance.dx, 2) + pow(distance.dy, 2)) <= bigRadius) {
+      center = center + details.delta;
+      // pointers.add(details.pointer);
+      // isPressed = pointers.length > 0;
     }
-    else {
-      pointers.remove(details.pointer);
-      isPressed = pointers.length > 0;
-    }
+    // else {
+    //   pointers.remove(details.pointer);
+    //   isPressed = pointers.length > 0;
+    // }
   }
 
   @override
   void draw(Canvas canvas) {
-    canvas.drawArc(Rect.fromCircle(center: center, radius: bigRadius), startAngle, sweepAngle, true, backgroundPaint);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: smallRadius), startAngle, sweepAngle, true, isPressed ? normalPaint : pressedPaint);
-    textPainter.paint(canvas, center+(pointingDirection*(bigRadius/2))-textOffset);
+    canvas.drawCircle(center, bigRadius, backgroundPaint);
+    canvas.drawCircle(center, smallRadius, isPressed ? pressedPaint : normalPaint);
+    textPainter.paint(canvas, center-textOffset);
   }
 }
 
-class JoystickPainter extends CustomPainter {
+class JoystickPainterMover extends CustomPainter {
   ValueNotifier<int> notifier;
   Map<String, CanvasInteractor> buttons = Map();
   CanvasHandler handler = CanvasHandler();
@@ -470,10 +461,7 @@ class JoystickPainter extends CustomPainter {
   void loadTrueCoordinates() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     handler.center = Offset(prefs.getDouble('HandlerX') ?? 0, prefs.getDouble('HandlerY') ?? 0);
-    buttons['X']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
-    buttons['Y']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
-    buttons['A']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
-    buttons['B']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
+    buttons['XYAB']?.center = Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0);
     buttons['L']?.center = Offset(prefs.getDouble('LButtonX') ?? 0, prefs.getDouble('LButtonY') ?? 0);
     buttons['R']?.center = Offset(prefs.getDouble('RButtonX') ?? 0, prefs.getDouble('RButtonY') ?? 0);
     buttons['Start']?.center = Offset(prefs.getDouble('StartX') ?? 0, prefs.getDouble('StartY') ?? 0);
@@ -482,8 +470,29 @@ class JoystickPainter extends CustomPainter {
     // print(Offset(prefs.getDouble('PizzaButtonsX') ?? 0, prefs.getDouble('PizzaButtonsY') ?? 0));
   }
 
-  JoystickPainter({required this.notifier}) : super(repaint: notifier) {
-   handler = CanvasHandler(
+  void saveNewCoordinates() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setDouble('PizzaButtonsX', buttons['XYAB']?.center.dx ?? 0);
+    prefs.setDouble('PizzaButtonsY', buttons['XYAB']?.center.dy ?? 0);
+    
+    prefs.setDouble('LButtonX', buttons['L']?.center.dx ?? 0);
+    prefs.setDouble('LButtonY', buttons['L']?.center.dy ?? 0);
+    
+    prefs.setDouble('RButtonX', buttons['R']?.center.dx ?? 0);
+    prefs.setDouble('RButtonY', buttons['R']?.center.dy ?? 0);
+    
+    prefs.setDouble('SelectX', buttons['Select']?.center.dx ?? 0);
+    prefs.setDouble('SelectY', buttons['Select']?.center.dy ?? 0);
+    
+    prefs.setDouble('StartX', buttons['Start']?.center.dx ?? 0);
+    prefs.setDouble('StartY', buttons['Start']?.center.dy ?? 0);
+    
+    prefs.setDouble('HandlerX', handler.center.dx ?? 0);
+    prefs.setDouble('HandlerY', handler.center.dy ?? 0);
+  }
+
+  JoystickPainterMover({required this.notifier}) : super(repaint: notifier) {
+   handler = CanvasHandlerMover(
       effectRadius: 100,
       centerX: 200,
       centerY: 300,
@@ -493,55 +502,17 @@ class JoystickPainter extends CustomPainter {
       activationColor: Colors.black26,
     );
 
-    buttons['A'] = CanvasConeButton(
-      text: 'A',
-      centerX: 700,
-      centerY: 200,
-      smallRadius: 100,
-      bigRadius: 110,
-      normalColor: Colors.green.shade800,
-      pressedColor: Colors.green.shade400,
-      startAngle: (pi/4),
-      sweepAngle: pi/2,
-    );
-
-    buttons['B'] = CanvasConeButton(
-      text: 'B',
-      centerX: 700,
-      centerY: 200,
-      smallRadius: 100,
-      bigRadius: 110,
-      normalColor: Colors.red.shade800,
-      pressedColor: Colors.red.shade400,
-      startAngle: (pi/4)*7,
-      sweepAngle: pi/2,
-    );
-
-    buttons['Y'] = CanvasConeButton(
-      text: 'Y',
-      centerX: 700,
-      centerY: 200,
-      smallRadius: 100,
-      bigRadius: 110,
-      normalColor: Colors.yellow.shade800,
-      pressedColor: Colors.yellow.shade400,
-      startAngle: (pi/4)*5,
-      sweepAngle: pi/2,
-    );
-
-    buttons['X'] = CanvasConeButton(
-      text: 'X',
+    buttons['XYAB'] = CanvasButtonMover(
+      text: 'XYAB',
       centerX: 700,
       centerY: 200,
       smallRadius: 100,
       bigRadius: 110,
       normalColor: Colors.blue.shade800,
       pressedColor: Colors.blue.shade400,
-      startAngle: (pi/4)*3,
-      sweepAngle: pi/2,
     );
 
-    buttons['R'] = CanvasButton(
+    buttons['R'] = CanvasButtonMover(
       text: 'R',
       centerX: 800,
       centerY: 50,
@@ -549,7 +520,7 @@ class JoystickPainter extends CustomPainter {
       pressedColor: Colors.grey.shade400,
     );
 
-    buttons['L'] = CanvasButton(
+    buttons['L'] = CanvasButtonMover(
       text: 'L',
       centerX: 100,
       centerY: 50,
@@ -557,7 +528,7 @@ class JoystickPainter extends CustomPainter {
       pressedColor: Colors.grey.shade400,
     );
 
-    buttons['Select'] = CanvasButton(
+    buttons['Select'] = CanvasButtonMover(
       text: 'Select',
       centerX: 400,
       centerY: 400,
@@ -568,7 +539,7 @@ class JoystickPainter extends CustomPainter {
       textOffsetY: 15,
     );
 
-    buttons['Start'] = CanvasButton(
+    buttons['Start'] = CanvasButtonMover(
       text: 'Start',
       centerX: 600,
       centerY: 400,
@@ -578,6 +549,18 @@ class JoystickPainter extends CustomPainter {
       textOffsetX: 20,
       textOffsetY: 15,
     );
+
+    // buttons['Exit'] = CanvasButtonCaller(
+    //   text: 'Exit',
+    //   centerX:600,
+    //   centerY: 30,
+    //   normalColor: Colors.blueGrey.shade400,
+    //   pressedColor: Colors.blueGrey.shade200,
+    //   fontSize: 20,
+    //   textOffsetX: 20,
+    //   textOffsetY: 15,
+    //   callback: () {Navigator.pop(context);},
+    // );
 
     loadTrueCoordinates();
   }
@@ -604,6 +587,8 @@ class JoystickPainter extends CustomPainter {
     });
 
     handler.move_test(details);
+
+    saveNewCoordinates();
   }
 
   String generateButtonData() {
@@ -631,5 +616,5 @@ class JoystickPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(JoystickPainter oldDelegate) => true;
+  bool shouldRepaint(JoystickPainterMover oldDelegate) => true;
 }
